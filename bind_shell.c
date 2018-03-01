@@ -10,8 +10,8 @@ Compile:	gcc -o bind_shell bind_shell.c
 #include <sys/socket.h>
 #include <unistd.h>
 
-int host_sockfd;				// host file descriptor
-int clnt_sockfd;				// client file descriptor
+int host_sockfd;		// host file descriptor
+int clnt_sockfd;		// client file descriptor
 struct sockaddr_in host_addr;	// host address
 struct sockaddr_in clnt_addr;	// client address
 
