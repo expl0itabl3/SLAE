@@ -11,10 +11,10 @@ _start:
 
     ; Create TCP socket
     ; host_sockfd = socket(AF_INET, SOCK_STREAM, 0)
-    xor edx, edx	; edx = 0
+    xor edx, edx	; EDX = 0
     push edx		; ipproto_ip = 0
-    xor ebx, ebx	; ebx = 0
-    inc ebx		; ebx = 1
+    xor ebx, ebx	; EBX = 0
+    inc ebx		; EBX = 1
     push ebx		; sock_stream = 1
     push byte 0x2	; pf_inet = 2
 
